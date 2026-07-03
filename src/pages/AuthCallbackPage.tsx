@@ -33,7 +33,6 @@ export default function AuthCallbackPage() {
     try {
       const user = decodePayload(payload)
 
-      // rejeita payload com mais de 10 minutos
       if (user.ts && Date.now() - user.ts > 10 * 60 * 1000) {
         setError('Login expirado. Tente novamente.')
         return

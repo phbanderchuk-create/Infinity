@@ -1,20 +1,7 @@
 /**
  * Cloudflare Worker - Login Discord + aviso no canal
  *
- * Como publicar:
- * 1. https://dash.cloudflare.com → Workers & Pages → Create → Create Worker
- * 2. Cole este arquivo inteiro
- * 3. Deploy
- * 4. Settings → Variables:
- *    SITE_URL = https://infinity-corebots.vercel.app
- *    DISCORD_CLIENT_ID = (seu client id)
- *    DISCORD_CLIENT_SECRET = (seu client secret)
- *    DISCORD_WEBHOOK_URL = (url do webhook)
- * 5. No Discord Developer Portal, Redirect:
- *    https://SEU-WORKER.workers.dev/callback
- * 6. Na Vercel, variável:
- *    VITE_DISCORD_AUTH_URL = https://SEU-WORKER.workers.dev
- * 7. Redeploy do site na Vercel
+ * URL: https://infinity-bots-auth.phbanderchuk.workers.dev
  */
 
 export default {

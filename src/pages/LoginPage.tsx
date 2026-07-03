@@ -30,13 +30,11 @@ export default function LoginPage() {
 
   const handleDiscord = () => {
     const authUrl = import.meta.env.VITE_DISCORD_AUTH_URL as string | undefined
-    if (!authUrl) {
-      alert(
-        'Login Discord ainda nao configurado.\n\nDefina VITE_DISCORD_AUTH_URL na Vercel com a URL do Worker da Cloudflare.\nVeja o arquivo worker/discord-auth.js',
-      )
-      return
-    }
-    window.location.href = `${authUrl.replace(/\/$/, '')}/login`
+    const base = (authUrl || 'https://infinity-bots-auth.phbanderchuk.workers.dev').replace(
+      /\/$/,
+      '',
+    )
+    window.location.href = `${base}/login`
   }
 
   return (
