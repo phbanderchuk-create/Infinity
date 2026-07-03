@@ -23,7 +23,7 @@ export default function AuthCallbackPage() {
     ;(async () => {
       try {
         const res = await fetch(
-          `/api/auth/verify?payload=${encodeURIComponent(payload)}&sig=${encodeURIComponent(sig)}`,
+          `/api/auth-verify?payload=${encodeURIComponent(payload)}&sig=${encodeURIComponent(sig)}`,
         )
         const data = await res.json()
 

@@ -29,7 +29,7 @@ export default function LoginPage() {
   }
 
   const handleDiscord = () => {
-    window.location.href = '/api/auth/discord'
+    window.location.href = '/api/discord-login'
   }
 
   return (

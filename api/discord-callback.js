@@ -1,46 +1,30 @@
-import crypto from 'crypto'
+import crypto from 'node:crypto'
 
-/**
- * Callback OAuth2 do Discord.
- * Troca o code por token, busca o usuário, avisa no canal (webhook) e redireciona ao site.
- * GET /api/auth/discord/callback?code=...
- */
 export default async function handler(req, res) {
   const siteUrl = process.env.SITE_URL || `https://${req.headers.host}`
   const clientId = process.env.DISCORD_CLIENT_ID
   const clientSecret = process.env.DISCORD_CLIENT_SECRET
   const redirectUri =
-    process.env.DISCORD_REDIRECT_URI || `${siteUrl}/api/auth/discord/callback`
+    process.env.DISCORD_REDIRECT_URI || `${siteUrl}/api/discord-callback`
   const webhookUrl = process.env.DISCORD_WEBHOOK_URL
   const sessionSecret = process.env.SESSION_SECRET || clientSecret
 
-  const fail = (message) => {
-    res.statusCode = 302
-    res.setHeader(
-      'Location',
-      `${siteUrl}/login?error=${encodeURIComponent(message)}`,
-    )
-    res.end()
-  }
+  const fail = (message) =>
+    res.redirect(302, `${siteUrl}/login?error=${encodeURIComponent(message)}`)
 
   if (req.method !== 'GET') {
-    res.statusCode = 405
-    res.end('Method not allowed')
-    return
+    return res.status(405).send('Method not allowed')
   }
 
-  const url = new URL(req.url, `https://${req.headers.host}`)
-  const code = url.searchParams.get('code')
-  const oauthError = url.searchParams.get('error')
+  const code = req.query?.code
+  const oauthError = req.query?.error
 
   if (oauthError) {
-    fail('Login com Discord cancelado.')
-    return
+    return fail('Login com Discord cancelado.')
   }
 
   if (!code || !clientId || !clientSecret) {
-    fail('Configuração Discord incompleta ou código ausente.')
-    return
+    return fail('Configuração Discord incompleta ou código ausente.')
   }
 
   try {
@@ -51,14 +35,13 @@ export default async function handler(req, res) {
         client_id: clientId,
         client_secret: clientSecret,
         grant_type: 'authorization_code',
-        code,
+        code: String(code),
         redirect_uri: redirectUri,
       }),
     })
 
     if (!tokenRes.ok) {
-      fail('Não foi possível validar o login no Discord.')
-      return
+      return fail('Não foi possível validar o login no Discord.')
     }
 
     const tokenData = await tokenRes.json()
@@ -67,14 +50,13 @@ export default async function handler(req, res) {
     })
 
     if (!userRes.ok) {
-      fail('Não foi possível obter seus dados do Discord.')
-      return
+      return fail('Não foi possível obter seus dados do Discord.')
     }
 
     const discordUser = await userRes.json()
     const avatar = discordUser.avatar
       ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png?size=128`
-      : `https://cdn.discordapp.com/embed/avatars/${Number(discordUser.discriminator || 0) % 5}.png`
+      : `https://cdn.discordapp.com/embed/avatars/0.png`
 
     const userPayload = {
       id: discordUser.id,
@@ -95,11 +77,9 @@ export default async function handler(req, res) {
       .update(payload)
       .digest('base64url')
 
-    res.statusCode = 302
-    res.setHeader('Location', `${siteUrl}/auth/callback?payload=${payload}&sig=${sig}`)
-    res.end()
+    return res.redirect(302, `${siteUrl}/auth/callback?payload=${payload}&sig=${sig}`)
   } catch {
-    fail('Erro inesperado no login com Discord.')
+    return fail('Erro inesperado no login com Discord.')
   }
 }
 
