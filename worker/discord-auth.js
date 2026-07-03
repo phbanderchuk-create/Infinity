@@ -118,12 +118,16 @@ async function handleCallback(url, env, siteUrl) {
       }
     }
 
-    const payload = btoa(unescape(encodeURIComponent(JSON.stringify(userPayload))))
+    const json = JSON.stringify(userPayload)
+    const bytes = new TextEncoder().encode(json)
+    let binary = ''
+    for (const byte of bytes) binary += String.fromCharCode(byte)
+    const payload = btoa(binary)
       .replace(/\+/g, '-')
       .replace(/\//g, '_')
       .replace(/=+$/g, '')
 
-    return Response.redirect(`${siteUrl}/#/auth/callback?payload=${payload}`, 302)
+    return Response.redirect(`${siteUrl}/#/auth/callback?payload=${encodeURIComponent(payload)}`, 302)
   } catch {
     return Response.redirect(
       `${siteUrl}/#/login?error=${encodeURIComponent('Erro inesperado no login com Discord.')}`,

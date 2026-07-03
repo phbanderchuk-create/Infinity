@@ -1,84 +1,66 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { decodeDiscordPayload, readPayloadFromUrl, saveUser } from '../auth/session'
 import logoImg from '../assets/logo.png'
-
-function decodePayload(payload: string) {
-  const padded = payload.replace(/-/g, '+').replace(/_/g, '/')
-  const json = decodeURIComponent(escape(atob(padded)))
-  return JSON.parse(json) as {
-    id: string
-    name?: string
-    username?: string
-    email?: string
-    avatar?: string
-    ts?: number
-  }
-}
-
-function readPayload(searchParams: URLSearchParams) {
-  const fromParams = searchParams.get('payload')
-  if (fromParams) return fromParams
-
-  // fallback para #/auth/callback?payload=...
-  const hash = window.location.hash
-  const queryIndex = hash.indexOf('?')
-  if (queryIndex === -1) return null
-  return new URLSearchParams(hash.slice(queryIndex + 1)).get('payload')
-}
 
 export default function AuthCallbackPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
-  const [params] = useSearchParams()
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const payload = readPayload(params)
-
-    if (!payload) {
-      setError('Dados de login inválidos.')
-      return
-    }
-
     try {
-      const user = decodePayload(payload)
+      const payload = readPayloadFromUrl()
 
-      if (user.ts && Date.now() - user.ts > 10 * 60 * 1000) {
+      if (!payload) {
+        setError('Dados de login inválidos. Tente entrar novamente.')
+        return
+      }
+
+      const data = decodeDiscordPayload(payload)
+
+      if (data.ts && Date.now() - data.ts > 15 * 60 * 1000) {
         setError('Login expirado. Tente novamente.')
         return
       }
 
-      const displayName = user.name || user.username || 'Discord User'
+      const user = {
+        name: data.name || data.username || 'Discord User',
+        username: data.username,
+        email: data.email || '',
+        avatar: data.avatar,
+        provider: 'discord' as const,
+        discordId: data.id,
+      }
 
-      login({
-        name: displayName,
-        username: user.username,
-        email: user.email || '',
-        avatar: user.avatar,
-        provider: 'discord',
-        discordId: user.id,
-      })
+      // salva direto + no contexto
+      saveUser(user)
+      login(user)
 
-      navigate('/dashboard', { replace: true })
+      // limpa o payload da URL e vai pro painel
+      window.location.hash = '#/dashboard'
     } catch {
       setError('Não foi possível concluir o login com Discord.')
     }
-  }, [params, login, navigate])
+  }, [login, navigate])
+
+  if (error) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-brand-black px-4 text-center">
+        <img src={logoImg} alt="Infinity Bots" className="mb-6 h-12 w-auto" />
+        <p className="mb-4 text-red-400">{error}</p>
+        <Link to="/login" className="btn-primary px-5 py-2.5 text-sm">
+          Voltar ao login
+        </Link>
+      </div>
+    )
+  }
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-brand-black px-4 text-center">
       <img src={logoImg} alt="Infinity Bots" className="mb-6 h-12 w-auto" />
-      {error ? (
-        <>
-          <p className="mb-4 text-red-400">{error}</p>
-          <Link to="/login" className="btn-primary px-5 py-2.5 text-sm">
-            Voltar ao login
-          </Link>
-        </>
-      ) : (
-        <p className="text-brand-muted">Conectando com Discord...</p>
-      )}
+      <p className="text-brand-muted">Conectando com Discord...</p>
     </div>
   )
 }

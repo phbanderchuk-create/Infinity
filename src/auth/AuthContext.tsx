@@ -6,6 +6,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { clearUser, loadUser, saveUser } from './session'
 
 export type User = {
   name: string
@@ -22,30 +23,19 @@ type AuthContextValue = {
   logout: () => void
 }
 
-const STORAGE_KEY = 'infinity-bots-user'
-
 const AuthContext = createContext<AuthContextValue | null>(null)
 
-function loadUser(): User | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? (JSON.parse(raw) as User) : null
-  } catch {
-    return null
-  }
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(loadUser)
+  const [user, setUser] = useState<User | null>(() => loadUser())
 
   const login = useCallback((next: User) => {
+    saveUser(next)
     setUser(next)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
   }, [])
 
   const logout = useCallback(() => {
+    clearUser()
     setUser(null)
-    localStorage.removeItem(STORAGE_KEY)
   }, [])
 
   const value = useMemo(() => ({ user, login, logout }), [user, login, logout])
