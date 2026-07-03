@@ -3,6 +3,19 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import logoImg from '../assets/logo.png'
 
+function decodePayload(payload: string) {
+  const padded = payload.replace(/-/g, '+').replace(/_/g, '/')
+  const json = decodeURIComponent(escape(atob(padded)))
+  return JSON.parse(json) as {
+    id: string
+    name?: string
+    username?: string
+    email?: string
+    avatar?: string
+    ts?: number
+  }
+}
+
 export default function AuthCallbackPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
@@ -11,43 +24,31 @@ export default function AuthCallbackPage() {
 
   useEffect(() => {
     const payload = params.get('payload')
-    const sig = params.get('sig')
 
-    if (!payload || !sig) {
+    if (!payload) {
       setError('Dados de login inválidos.')
       return
     }
 
-    let cancelled = false
+    try {
+      const user = decodePayload(payload)
 
-    ;(async () => {
-      try {
-        const res = await fetch(
-          `/api/auth-verify?payload=${encodeURIComponent(payload)}&sig=${encodeURIComponent(sig)}`,
-        )
-        const data = await res.json()
-
-        if (!res.ok || !data.ok || !data.user) {
-          throw new Error(data.error || 'Falha ao validar login')
-        }
-
-        if (cancelled) return
-
-        login({
-          name: data.user.name || data.user.username,
-          email: data.user.email || '',
-          avatar: data.user.avatar,
-          provider: 'discord',
-          discordId: data.user.id,
-        })
-        navigate('/dashboard', { replace: true })
-      } catch {
-        if (!cancelled) setError('Não foi possível concluir o login com Discord.')
+      // rejeita payload com mais de 10 minutos
+      if (user.ts && Date.now() - user.ts > 10 * 60 * 1000) {
+        setError('Login expirado. Tente novamente.')
+        return
       }
-    })()
 
-    return () => {
-      cancelled = true
+      login({
+        name: user.name || user.username || 'Discord User',
+        email: user.email || '',
+        avatar: user.avatar,
+        provider: 'discord',
+        discordId: user.id,
+      })
+      navigate('/dashboard', { replace: true })
+    } catch {
+      setError('Não foi possível concluir o login com Discord.')
     }
   }, [params, login, navigate])
 
