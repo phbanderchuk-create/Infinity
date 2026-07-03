@@ -1,6 +1,5 @@
 /**
  * Cloudflare Worker - Login Discord + aviso no canal
- *
  * URL: https://infinity-bots-auth.phbanderchuk.workers.dev
  */
 
@@ -96,38 +95,38 @@ async function handleCallback(url, env, siteUrl) {
     }
 
     const discordUser = await userRes.json()
+    const name = discordUser.global_name || discordUser.username || 'Discord User'
+    const username = discordUser.username || ''
+    const email = discordUser.email || ''
     const avatar = discordUser.avatar
       ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png?size=128`
-      : 'https://cdn.discordapp.com/embed/avatars/0.png'
-
-    const userPayload = {
-      id: discordUser.id,
-      name: discordUser.global_name || discordUser.username,
-      username: discordUser.username,
-      email: discordUser.email || '',
-      avatar,
-      provider: 'discord',
-      ts: Date.now(),
-    }
+      : ''
 
     if (env.DISCORD_WEBHOOK_URL) {
       try {
-        await sendLoginWebhook(env.DISCORD_WEBHOOK_URL, userPayload)
+        await sendLoginWebhook(env.DISCORD_WEBHOOK_URL, {
+          id: discordUser.id,
+          name,
+          username,
+          email,
+          avatar,
+        })
       } catch {
         // nao bloqueia login
       }
     }
 
-    const json = JSON.stringify(userPayload)
-    const bytes = new TextEncoder().encode(json)
-    let binary = ''
-    for (const byte of bytes) binary += String.fromCharCode(byte)
-    const payload = btoa(binary)
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=+$/g, '')
+    // Passa os dados em query params simples (mais confiavel que base64)
+    const params = new URLSearchParams({
+      id: String(discordUser.id || ''),
+      name,
+      username,
+      email,
+      avatar,
+      ts: String(Date.now()),
+    })
 
-    return Response.redirect(`${siteUrl}/#/auth/callback?payload=${encodeURIComponent(payload)}`, 302)
+    return Response.redirect(`${siteUrl}/#/auth/callback?${params.toString()}`, 302)
   } catch {
     return Response.redirect(
       `${siteUrl}/#/login?error=${encodeURIComponent('Erro inesperado no login com Discord.')}`,

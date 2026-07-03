@@ -19,33 +19,37 @@ export function clearUser() {
   localStorage.removeItem(STORAGE_KEY)
 }
 
-/** Decodifica payload base64url vindo do Worker */
-export function decodeDiscordPayload(payload: string) {
-  let b64 = payload.replace(/-/g, '+').replace(/_/g, '/')
-  while (b64.length % 4 !== 0) b64 += '='
-
-  const binary = atob(b64)
-  const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0))
-  const json = new TextDecoder().decode(bytes)
-
-  return JSON.parse(json) as {
-    id: string
-    name?: string
-    username?: string
-    email?: string
-    avatar?: string
-    ts?: number
-  }
-}
-
-/** Lê ?payload= da query ou do hash (#/auth/callback?payload=) */
-export function readPayloadFromUrl(): string | null {
-  const search = new URLSearchParams(window.location.search)
-  const fromSearch = search.get('payload')
-  if (fromSearch) return fromSearch
-
+/** Lê os dados do Discord da URL (#/auth/callback?name=...&username=...) */
+export function readDiscordUserFromUrl(): User | null {
   const hash = window.location.hash
-  const q = hash.indexOf('?')
-  if (q === -1) return null
-  return new URLSearchParams(hash.slice(q + 1)).get('payload')
+  const queryIndex = hash.indexOf('?')
+  const queryString =
+    queryIndex >= 0 ? hash.slice(queryIndex + 1) : window.location.search.replace(/^\?/, '')
+
+  if (!queryString) return null
+
+  const params = new URLSearchParams(queryString)
+  const id = params.get('id')
+  const name = params.get('name')
+  const username = params.get('username')
+  const email = params.get('email') || ''
+  const avatar = params.get('avatar') || undefined
+  const ts = Number(params.get('ts') || '0')
+
+  if (!id && !name && !username) return null
+
+  if (ts && Date.now() - ts > 15 * 60 * 1000) {
+    throw new Error('Login expirado. Tente novamente.')
+  }
+
+  const displayName = (name && name.trim()) || (username && username.trim()) || 'Discord User'
+
+  return {
+    name: displayName,
+    username: username || undefined,
+    email,
+    avatar: avatar || undefined,
+    provider: 'discord',
+    discordId: id || undefined,
+  }
 }

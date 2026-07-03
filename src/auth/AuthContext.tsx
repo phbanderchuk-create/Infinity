@@ -2,6 +2,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -36,6 +37,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     clearUser()
     setUser(null)
+  }, [])
+
+  // re-sincroniza se outra aba/pagina salvar a sessao
+  useEffect(() => {
+    const sync = () => {
+      const stored = loadUser()
+      setUser(stored)
+    }
+    window.addEventListener('storage', sync)
+    window.addEventListener('focus', sync)
+    return () => {
+      window.removeEventListener('storage', sync)
+      window.removeEventListener('focus', sync)
+    }
   }, [])
 
   const value = useMemo(() => ({ user, login, logout }), [user, login, logout])
