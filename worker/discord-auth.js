@@ -1,6 +1,10 @@
 /**
  * Cloudflare Worker - Login Discord
  * https://infinity-bots-auth.phbanderchuk.workers.dev
+ *
+ * Depois do login, redireciona para:
+ *   https://SEU-SITE/?discord_login=...
+ * O site le isso e salva a sessao.
  */
 
 export default {
@@ -48,7 +52,7 @@ async function handleCallback(url, env, siteUrl) {
   }
 
   const fail = (msg) =>
-    Response.redirect(`${siteUrl}/#/login?error=${encodeURIComponent(msg)}`, 302)
+    Response.redirect(`${siteUrl}/?discord_error=${encodeURIComponent(msg)}`, 302)
 
   if (oauthError) return fail('Login com Discord cancelado.')
   if (!code || !env.DISCORD_CLIENT_ID || !env.DISCORD_CLIENT_SECRET) {
@@ -86,7 +90,6 @@ async function handleCallback(url, env, siteUrl) {
       avatar: d.avatar
         ? `https://cdn.discordapp.com/avatars/${d.id}/${d.avatar}.png?size=128`
         : '',
-      ts: Date.now(),
     }
 
     if (env.DISCORD_WEBHOOK_URL) {
@@ -95,9 +98,9 @@ async function handleCallback(url, env, siteUrl) {
       } catch (_) {}
     }
 
-    // um unico parametro "u" com JSON (evita perder nome/avatar)
-    const u = encodeURIComponent(JSON.stringify(user))
-    return Response.redirect(`${siteUrl}/#/auth/callback?u=${u}`, 302)
+    // Volta pro site na RAIZ com os dados (nao usa /auth/callback)
+    const discord_login = encodeURIComponent(JSON.stringify(user))
+    return Response.redirect(`${siteUrl}/?discord_login=${discord_login}`, 302)
   } catch (_) {
     return fail('Erro inesperado no login com Discord.')
   }

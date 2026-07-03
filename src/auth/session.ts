@@ -20,50 +20,59 @@ export function clearUser() {
   localStorage.removeItem(STORAGE_KEY)
 }
 
-type DiscordPayload = {
-  id?: string
-  name?: string
-  username?: string
-  email?: string
-  avatar?: string
-  ts?: number
-}
-
-/** Lê ?u=JSON da URL hash do callback Discord */
-export function readDiscordUserFromUrl(): User | null {
-  const hash = window.location.hash || ''
-  const q = hash.indexOf('?')
-  const query = q >= 0 ? hash.slice(q + 1) : window.location.search.replace(/^\?/, '')
-  if (!query) return null
-
-  const params = new URLSearchParams(query)
-  const raw = params.get('u')
-  if (!raw) return null
-
-  let data: DiscordPayload
+/**
+ * Se a URL tiver ?discord_login=..., salva o usuario e limpa a URL.
+ * Isso roda na entrada do site, sem depender de rota /auth/callback.
+ */
+export function consumeDiscordLoginFromUrl(): User | null {
   try {
-    data = JSON.parse(decodeURIComponent(raw)) as DiscordPayload
-  } catch {
-    try {
-      data = JSON.parse(raw) as DiscordPayload
-    } catch {
-      return null
+    const params = new URLSearchParams(window.location.search)
+
+    const err = params.get('discord_error')
+    if (err) {
+      // limpa o erro da URL
+      const url = new URL(window.location.href)
+      url.searchParams.delete('discord_error')
+      window.history.replaceState({}, '', url.pathname + url.hash)
+      throw new Error(err)
     }
-  }
 
-  if (data.ts && Date.now() - Number(data.ts) > 15 * 60 * 1000) {
-    throw new Error('Login expirado. Tente novamente.')
-  }
+    const raw = params.get('discord_login')
+    if (!raw) return null
 
-  const name = (data.name || data.username || '').trim()
-  if (!name && !data.id) return null
+    const data = JSON.parse(decodeURIComponent(raw)) as {
+      id?: string
+      name?: string
+      username?: string
+      email?: string
+      avatar?: string
+    }
 
-  return {
-    name: name || 'Usuario',
-    username: data.username || undefined,
-    email: data.email || '',
-    avatar: data.avatar || undefined,
-    provider: 'discord',
-    discordId: data.id || undefined,
+    const name = (data.name || data.username || '').trim()
+    if (!name) return null
+
+    const user: User = {
+      name,
+      username: data.username || undefined,
+      email: data.email || '',
+      avatar: data.avatar || undefined,
+      provider: 'discord',
+      discordId: data.id || undefined,
+    }
+
+    saveUser(user)
+
+    // limpa ?discord_login= da URL
+    const url = new URL(window.location.href)
+    url.searchParams.delete('discord_login')
+    const clean = url.pathname + (url.hash || '#/')
+    window.history.replaceState({}, '', clean)
+
+    return user
+  } catch (e) {
+    if (e instanceof Error && e.message && !e.message.includes('JSON')) {
+      throw e
+    }
+    return null
   }
 }

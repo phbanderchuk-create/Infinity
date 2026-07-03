@@ -13,13 +13,13 @@ function DiscordIcon({ className }: { className?: string }) {
 }
 
 export default function LoginPage() {
-  const { login } = useAuth()
+  const { login, authError, clearAuthError } = useAuth()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const oauthError = searchParams.get('error')
+  const oauthError = searchParams.get('error') || authError
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
@@ -53,6 +53,11 @@ export default function LoginPage() {
         {oauthError && (
           <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
             {oauthError}
+            {authError && (
+              <button type="button" onClick={clearAuthError} className="ml-2 underline">
+                fechar
+              </button>
+            )}
           </div>
         )}
 

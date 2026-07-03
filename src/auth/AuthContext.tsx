@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { clearUser, loadUser, saveUser } from './session'
+import { clearUser, consumeDiscordLoginFromUrl, loadUser, saveUser } from './session'
 
 export type User = {
   name: string
@@ -22,16 +22,45 @@ type AuthContextValue = {
   user: User | null
   login: (user: User) => void
   logout: () => void
+  authError: string | null
+  clearAuthError: () => void
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
+function initialUser(): { user: User | null; error: string | null; justLoggedIn: boolean } {
+  try {
+    const fromDiscord = consumeDiscordLoginFromUrl()
+    if (fromDiscord) {
+      return { user: fromDiscord, error: null, justLoggedIn: true }
+    }
+  } catch (e) {
+    return {
+      user: loadUser(),
+      error: e instanceof Error ? e.message : 'Erro no login Discord',
+      justLoggedIn: false,
+    }
+  }
+  return { user: loadUser(), error: null, justLoggedIn: false }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => loadUser())
+  const initial = initialUser()
+  const [user, setUser] = useState<User | null>(initial.user)
+  const [authError, setAuthError] = useState<string | null>(initial.error)
+
+  // se acabou de logar pelo Discord, vai pro painel
+  useEffect(() => {
+    if (initial.justLoggedIn) {
+      window.location.hash = '#/dashboard'
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const login = useCallback((next: User) => {
     saveUser(next)
     setUser(next)
+    setAuthError(null)
   }, [])
 
   const logout = useCallback(() => {
@@ -39,12 +68,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }, [])
 
-  // re-sincroniza se outra aba/pagina salvar a sessao
+  const clearAuthError = useCallback(() => setAuthError(null), [])
+
   useEffect(() => {
-    const sync = () => {
-      const stored = loadUser()
-      setUser(stored)
-    }
+    const sync = () => setUser(loadUser())
     window.addEventListener('storage', sync)
     window.addEventListener('focus', sync)
     return () => {
@@ -53,7 +80,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const value = useMemo(() => ({ user, login, logout }), [user, login, logout])
+  const value = useMemo(
+    () => ({ user, login, logout, authError, clearAuthError }),
+    [user, login, logout, authError, clearAuthError],
+  )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
