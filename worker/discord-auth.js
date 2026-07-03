@@ -64,14 +64,14 @@ async function handleCallback(url, env, siteUrl) {
 
   if (oauthError) {
     return Response.redirect(
-      `${siteUrl}/login?error=${encodeURIComponent('Login com Discord cancelado.')}`,
+      `${siteUrl}/#/login?error=${encodeURIComponent('Login com Discord cancelado.')}`,
       302,
     )
   }
 
   if (!code || !env.DISCORD_CLIENT_ID || !env.DISCORD_CLIENT_SECRET) {
     return Response.redirect(
-      `${siteUrl}/login?error=${encodeURIComponent('Configuracao Discord incompleta no Worker.')}`,
+      `${siteUrl}/#/login?error=${encodeURIComponent('Configuracao Discord incompleta no Worker.')}`,
       302,
     )
   }
@@ -91,7 +91,7 @@ async function handleCallback(url, env, siteUrl) {
 
     if (!tokenRes.ok) {
       return Response.redirect(
-        `${siteUrl}/login?error=${encodeURIComponent('Nao foi possivel validar o login no Discord.')}`,
+        `${siteUrl}/#/login?error=${encodeURIComponent('Nao foi possivel validar o login no Discord.')}`,
         302,
       )
     }
@@ -103,7 +103,7 @@ async function handleCallback(url, env, siteUrl) {
 
     if (!userRes.ok) {
       return Response.redirect(
-        `${siteUrl}/login?error=${encodeURIComponent('Nao foi possivel obter seus dados do Discord.')}`,
+        `${siteUrl}/#/login?error=${encodeURIComponent('Nao foi possivel obter seus dados do Discord.')}`,
         302,
       )
     }
@@ -136,10 +136,10 @@ async function handleCallback(url, env, siteUrl) {
       .replace(/\//g, '_')
       .replace(/=+$/g, '')
 
-    return Response.redirect(`${siteUrl}/auth/callback?payload=${payload}`, 302)
+    return Response.redirect(`${siteUrl}/#/auth/callback?payload=${payload}`, 302)
   } catch {
     return Response.redirect(
-      `${siteUrl}/login?error=${encodeURIComponent('Erro inesperado no login com Discord.')}`,
+      `${siteUrl}/#/login?error=${encodeURIComponent('Erro inesperado no login com Discord.')}`,
       302,
     )
   }
