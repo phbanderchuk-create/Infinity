@@ -1,0 +1,162 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-black: #0a0a0a;
+  --color-brand-off-white: #111111;
+  --color-brand-gray-light: #2a2a2a;
+  --color-brand-gray-mid: #1a1a1a;
+  --color-brand-gray-border: #2e2e2e;
+  --color-brand-gray-dark: #111111;
+  --color-brand-muted: #9ca3af;
+  --color-brand-accent: #a855f7;
+  --color-brand-accent-light: #c084fc;
+  --color-brand-purple: #9333ea;
+  --color-brand-purple-dark: #7c3aed;
+  --color-brand-purple-glow: #bf00ff;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-display: "Orbitron", "Inter", system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #0a0a0a;
+  color: #ffffff;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #111111;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #a855f7;
+  border-radius: 3px;
+}
+
+.btn-primary {
+  @apply rounded-lg bg-brand-accent px-6 py-3 font-semibold text-white transition-all duration-200 hover:bg-brand-purple-dark focus:outline-none focus:ring-2 focus:ring-brand-accent focus:ring-offset-2 focus:ring-offset-brand-black disabled:cursor-not-allowed disabled:opacity-50;
+  box-shadow: 0 0 24px rgba(168, 85, 247, 0.35);
+}
+
+.btn-primary:hover {
+  box-shadow: 0 0 32px rgba(168, 85, 247, 0.5);
+}
+
+.btn-secondary {
+  @apply rounded-lg border border-brand-gray-border bg-transparent px-6 py-3 font-semibold text-white transition-all duration-200 hover:border-brand-accent hover:text-brand-accent-light focus:outline-none focus:ring-2 focus:ring-brand-accent focus:ring-offset-2 focus:ring-offset-brand-black disabled:opacity-50;
+}
+
+.btn-ghost {
+  @apply rounded-lg px-4 py-2 font-medium text-brand-muted transition-all duration-200 hover:text-white;
+}
+
+.section-title {
+  @apply text-3xl font-bold text-white md:text-4xl;
+}
+
+.gradient-text {
+  background-image: linear-gradient(to right, #c084fc, #a855f7, #9333ea);
+  background-clip: text;
+  color: transparent;
+}
+
+.glass-card {
+  @apply rounded-xl border border-brand-gray-border bg-brand-gray-mid/60 backdrop-blur-sm;
+}
+
+.browser-frame {
+  @apply overflow-hidden rounded-xl border border-brand-gray-border bg-brand-gray-dark shadow-lg transition-all duration-300;
+}
+
+.browser-frame:hover {
+  @apply -translate-y-1.5 border-brand-accent/40 shadow-[0_25px_70px_rgba(0,0,0,0.6),0_0_40px_rgba(168,85,247,0.12)];
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-18px);
+  }
+}
+
+@keyframes glowPulse {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.6s ease-out both;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-in-out both;
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-float-delay {
+  animation: float 6s ease-in-out 2s infinite;
+}
+
+.animate-glow-pulse {
+  animation: glowPulse 3s ease-in-out infinite;
+}
+
+.animate-pulse-slow {
+  animation: pulse 3s ease infinite;
+}
+
+.stagger-2 {
+  animation-delay: 0.2s;
+}
+
+.stagger-3 {
+  animation-delay: 0.3s;
+}
+
+.stagger-4 {
+  animation-delay: 0.4s;
+}
