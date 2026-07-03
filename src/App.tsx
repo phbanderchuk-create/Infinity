@@ -1,6 +1,11 @@
 import { useState } from 'react'
+import { Link, Route, Routes } from 'react-router-dom'
 import { LanguageSelector } from './components/LanguageSelector'
 import { useLanguage } from './i18n/LanguageContext'
+import LoginPage from './pages/LoginPage'
+import RegisterPage from './pages/RegisterPage'
+import DashboardPage from './pages/DashboardPage'
+import CheckoutPage from './pages/CheckoutPage'
 import {
   ArrowRight,
   ArrowUpRight,
@@ -61,7 +66,7 @@ const plansData = [
 
 function Logo() {
   return (
-    <a href="/" className="group flex items-center gap-3">
+    <Link to="/" className="group flex items-center gap-3">
       <img
         src={logoImg}
         alt="Infinity Bots"
@@ -70,7 +75,7 @@ function Logo() {
       <span className="font-display hidden text-sm font-extrabold tracking-widest text-white sm:inline">
         INFINITY BOTS
       </span>
-    </a>
+    </Link>
   )
 }
 
@@ -130,13 +135,13 @@ function Header() {
             ))}
             <LanguageSelector />
             <div className="ml-2 flex items-center gap-2">
-              <a href="#login" className="btn-ghost flex items-center gap-1.5 text-sm">
+              <Link to="/login" className="btn-ghost flex items-center gap-1.5 text-sm">
                 <LogIn size={14} />
                 {t.nav.signIn}
-              </a>
-              <a href="#register" className="btn-primary px-4 py-2 text-sm">
+              </Link>
+              <Link to="/register" className="btn-primary px-4 py-2 text-sm">
                 {t.nav.getStarted}
-              </a>
+              </Link>
             </div>
           </nav>
 
@@ -169,12 +174,12 @@ function Header() {
                 <LanguageSelector />
               </div>
               <div className="mt-2 flex flex-col gap-2 px-3">
-                <a href="#login" className="btn-ghost text-sm">
+                <Link to="/login" className="btn-ghost text-sm">
                   {t.nav.signIn}
-                </a>
-                <a href="#register" className="btn-primary text-center text-sm">
+                </Link>
+                <Link to="/register" className="btn-primary text-center text-sm">
                   {t.nav.getStarted}
-                </a>
+                </Link>
               </div>
             </div>
           </div>
@@ -237,13 +242,13 @@ function Hero() {
               {t.hero.ctaProducts}
               <ArrowRight size={18} />
             </a>
-            <a
-              href="#login"
+            <Link
+              to="/login"
               className="btn-secondary flex items-center gap-2 px-8 py-4 text-base"
             >
               <Play size={15} className="fill-white" />
               {t.hero.ctaPanel}
-            </a>
+            </Link>
           </div>
         </div>
 
@@ -549,34 +554,35 @@ function PlansSection() {
                 ))}
               </ul>
 
-              <button
-                className={`w-full rounded-xl py-3 text-sm font-semibold transition-all duration-200 focus:ring-2 focus:ring-brand-accent focus:ring-offset-2 focus:outline-none ${
+              <Link
+                to={`/checkout/${plan.key}`}
+                className={`block w-full rounded-xl py-3 text-center text-sm font-semibold transition-all duration-200 focus:ring-2 focus:ring-brand-accent focus:ring-offset-2 focus:outline-none ${
                   plan.popular
                     ? 'bg-brand-accent text-white hover:bg-brand-accent-light'
                     : 'border border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-white'
                 }`}
               >
                 {t.plans.subscribe}
-              </button>
+              </Link>
 
               <div className="mt-3 text-center">
-                <a
-                  href="#"
+                <Link
+                  to={`/checkout/${plan.key}`}
                   className="inline-flex items-center gap-1 text-xs text-brand-muted transition-colors hover:text-brand-accent"
                 >
                   {t.plans.moreDetails}
                   <ArrowRight size={11} />
-                </a>
+                </Link>
               </div>
 
               <p className="mt-3 text-center text-xs text-brand-muted">
-                <a href="#login" className="text-brand-accent hover:underline">
+                <Link to="/login" className="text-brand-accent hover:underline">
                   {t.plans.loginToBuy}
-                </a>{' '}
+                </Link>{' '}
                 {t.plans.or}{' '}
-                <a href="#register" className="text-brand-accent hover:underline">
+                <Link to="/register" className="text-brand-accent hover:underline">
                   {t.plans.createAccount}
-                </a>{' '}
+                </Link>{' '}
                 {t.plans.toBuy}
               </p>
             </div>
@@ -644,12 +650,12 @@ function CtaSection() {
                 {t.cta.start}
                 <ArrowRight size={20} />
               </a>
-              <a
-                href="#login"
+              <Link
+                to="/login"
                 className="btn-secondary flex items-center justify-center gap-2 px-10 py-4 text-lg"
               >
                 {t.cta.hasAccount}
-              </a>
+              </Link>
             </div>
           </div>
         </div>
@@ -713,28 +719,28 @@ function Footer() {
             <h4 className="mb-4 text-sm font-semibold text-white">{t.footer.account}</h4>
             <ul className="space-y-2">
               <li>
-                <a
-                  href="#login"
+                <Link
+                  to="/login"
                   className="text-sm text-brand-muted transition-colors hover:text-white"
                 >
                   {t.footer.signIn}
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="#register"
+                <Link
+                  to="/register"
                   className="text-sm text-brand-muted transition-colors hover:text-white"
                 >
                   {t.footer.createAccount}
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="#dashboard"
+                <Link
+                  to="/dashboard"
                   className="text-sm text-brand-muted transition-colors hover:text-white"
                 >
                   {t.footer.dashboard}
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -750,7 +756,7 @@ function Footer() {
   )
 }
 
-export default function App() {
+function LandingPage() {
   return (
     <div className="min-h-screen overflow-x-hidden bg-brand-black">
       <Header />
@@ -762,5 +768,17 @@ export default function App() {
       <CtaSection />
       <Footer />
     </div>
+  )
+}
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/dashboard" element={<DashboardPage />} />
+      <Route path="/checkout/:planId" element={<CheckoutPage />} />
+    </Routes>
   )
 }
