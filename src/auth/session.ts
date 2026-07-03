@@ -9,7 +9,8 @@ export function saveUser(user: User) {
 export function loadUser(): User | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? (JSON.parse(raw) as User) : null
+    if (!raw) return null
+    return JSON.parse(raw) as User
   } catch {
     return null
   }
@@ -19,37 +20,50 @@ export function clearUser() {
   localStorage.removeItem(STORAGE_KEY)
 }
 
-/** Lê os dados do Discord da URL (#/auth/callback?name=...&username=...) */
+type DiscordPayload = {
+  id?: string
+  name?: string
+  username?: string
+  email?: string
+  avatar?: string
+  ts?: number
+}
+
+/** Lê ?u=JSON da URL hash do callback Discord */
 export function readDiscordUserFromUrl(): User | null {
-  const hash = window.location.hash
-  const queryIndex = hash.indexOf('?')
-  const queryString =
-    queryIndex >= 0 ? hash.slice(queryIndex + 1) : window.location.search.replace(/^\?/, '')
+  const hash = window.location.hash || ''
+  const q = hash.indexOf('?')
+  const query = q >= 0 ? hash.slice(q + 1) : window.location.search.replace(/^\?/, '')
+  if (!query) return null
 
-  if (!queryString) return null
+  const params = new URLSearchParams(query)
+  const raw = params.get('u')
+  if (!raw) return null
 
-  const params = new URLSearchParams(queryString)
-  const id = params.get('id')
-  const name = params.get('name')
-  const username = params.get('username')
-  const email = params.get('email') || ''
-  const avatar = params.get('avatar') || undefined
-  const ts = Number(params.get('ts') || '0')
+  let data: DiscordPayload
+  try {
+    data = JSON.parse(decodeURIComponent(raw)) as DiscordPayload
+  } catch {
+    try {
+      data = JSON.parse(raw) as DiscordPayload
+    } catch {
+      return null
+    }
+  }
 
-  if (!id && !name && !username) return null
-
-  if (ts && Date.now() - ts > 15 * 60 * 1000) {
+  if (data.ts && Date.now() - Number(data.ts) > 15 * 60 * 1000) {
     throw new Error('Login expirado. Tente novamente.')
   }
 
-  const displayName = (name && name.trim()) || (username && username.trim()) || 'Discord User'
+  const name = (data.name || data.username || '').trim()
+  if (!name && !data.id) return null
 
   return {
-    name: displayName,
-    username: username || undefined,
-    email,
-    avatar: avatar || undefined,
+    name: name || 'Usuario',
+    username: data.username || undefined,
+    email: data.email || '',
+    avatar: data.avatar || undefined,
     provider: 'discord',
-    discordId: id || undefined,
+    discordId: data.id || undefined,
   }
 }

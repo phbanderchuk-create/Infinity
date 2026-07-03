@@ -1,6 +1,6 @@
 /**
- * Cloudflare Worker - Login Discord + aviso no canal
- * URL: https://infinity-bots-auth.phbanderchuk.workers.dev
+ * Cloudflare Worker - Login Discord
+ * https://infinity-bots-auth.phbanderchuk.workers.dev
  */
 
 export default {
@@ -41,25 +41,18 @@ function startLogin(env, workerOrigin) {
 async function handleCallback(url, env, siteUrl) {
   const code = url.searchParams.get('code')
   const oauthError = url.searchParams.get('error')
-  const workerOrigin = url.origin
-  const redirectUri = `${workerOrigin}/callback`
+  const redirectUri = `${url.origin}/callback`
 
   if (!siteUrl) {
     return new Response('SITE_URL nao configurado no Worker', { status: 500 })
   }
 
-  if (oauthError) {
-    return Response.redirect(
-      `${siteUrl}/#/login?error=${encodeURIComponent('Login com Discord cancelado.')}`,
-      302,
-    )
-  }
+  const fail = (msg) =>
+    Response.redirect(`${siteUrl}/#/login?error=${encodeURIComponent(msg)}`, 302)
 
+  if (oauthError) return fail('Login com Discord cancelado.')
   if (!code || !env.DISCORD_CLIENT_ID || !env.DISCORD_CLIENT_SECRET) {
-    return Response.redirect(
-      `${siteUrl}/#/login?error=${encodeURIComponent('Configuracao Discord incompleta no Worker.')}`,
-      302,
-    )
+    return fail('Configuracao Discord incompleta no Worker.')
   }
 
   try {
@@ -75,69 +68,43 @@ async function handleCallback(url, env, siteUrl) {
       }),
     })
 
-    if (!tokenRes.ok) {
-      return Response.redirect(
-        `${siteUrl}/#/login?error=${encodeURIComponent('Nao foi possivel validar o login no Discord.')}`,
-        302,
-      )
-    }
+    if (!tokenRes.ok) return fail('Nao foi possivel validar o login no Discord.')
 
     const tokenData = await tokenRes.json()
     const userRes = await fetch('https://discord.com/api/users/@me', {
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     })
 
-    if (!userRes.ok) {
-      return Response.redirect(
-        `${siteUrl}/#/login?error=${encodeURIComponent('Nao foi possivel obter seus dados do Discord.')}`,
-        302,
-      )
-    }
+    if (!userRes.ok) return fail('Nao foi possivel obter seus dados do Discord.')
 
-    const discordUser = await userRes.json()
-    const name = discordUser.global_name || discordUser.username || 'Discord User'
-    const username = discordUser.username || ''
-    const email = discordUser.email || ''
-    const avatar = discordUser.avatar
-      ? `https://cdn.discordapp.com/avatars/${discordUser.id}/${discordUser.avatar}.png?size=128`
-      : ''
+    const d = await userRes.json()
+    const user = {
+      id: String(d.id || ''),
+      name: String(d.global_name || d.username || 'Usuario'),
+      username: String(d.username || ''),
+      email: String(d.email || ''),
+      avatar: d.avatar
+        ? `https://cdn.discordapp.com/avatars/${d.id}/${d.avatar}.png?size=128`
+        : '',
+      ts: Date.now(),
+    }
 
     if (env.DISCORD_WEBHOOK_URL) {
       try {
-        await sendLoginWebhook(env.DISCORD_WEBHOOK_URL, {
-          id: discordUser.id,
-          name,
-          username,
-          email,
-          avatar,
-        })
-      } catch {
-        // nao bloqueia login
-      }
+        await sendLoginWebhook(env.DISCORD_WEBHOOK_URL, user)
+      } catch (_) {}
     }
 
-    // Passa os dados em query params simples (mais confiavel que base64)
-    const params = new URLSearchParams({
-      id: String(discordUser.id || ''),
-      name,
-      username,
-      email,
-      avatar,
-      ts: String(Date.now()),
-    })
-
-    return Response.redirect(`${siteUrl}/#/auth/callback?${params.toString()}`, 302)
-  } catch {
-    return Response.redirect(
-      `${siteUrl}/#/login?error=${encodeURIComponent('Erro inesperado no login com Discord.')}`,
-      302,
-    )
+    // um unico parametro "u" com JSON (evita perder nome/avatar)
+    const u = encodeURIComponent(JSON.stringify(user))
+    return Response.redirect(`${siteUrl}/#/auth/callback?u=${u}`, 302)
+  } catch (_) {
+    return fail('Erro inesperado no login com Discord.')
   }
 }
 
 async function sendLoginWebhook(webhookUrl, user) {
   const now = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })
-
   await fetch(webhookUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -150,8 +117,8 @@ async function sendLoginWebhook(webhookUrl, user) {
           thumbnail: user.avatar ? { url: user.avatar } : undefined,
           fields: [
             { name: 'Nome', value: user.name || '-', inline: true },
-            { name: 'Username', value: `\`${user.username}\``, inline: true },
-            { name: 'Discord ID', value: `\`${user.id}\``, inline: false },
+            { name: 'Username', value: '`' + user.username + '`', inline: true },
+            { name: 'Discord ID', value: '`' + user.id + '`', inline: false },
             { name: 'Email', value: user.email || 'Nao informado', inline: false },
             { name: 'Quando', value: now, inline: false },
           ],
