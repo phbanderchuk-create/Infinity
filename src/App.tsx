@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, Route, Routes } from 'react-router-dom'
 import { LanguageSelector } from './components/LanguageSelector'
 import { useLanguage } from './i18n/LanguageContext'
+import { useAuth } from './auth/AuthContext'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import DashboardPage from './pages/DashboardPage'
@@ -18,6 +19,7 @@ import {
   ExternalLink,
   Globe,
   LogIn,
+  LogOut,
   Menu,
   MessageCircle,
   Palette,
@@ -80,8 +82,74 @@ function Logo() {
   )
 }
 
+function UserMenu() {
+  const { user, logout } = useAuth()
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onClick)
+    return () => document.removeEventListener('mousedown', onClick)
+  }, [])
+
+  if (!user) return null
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 rounded-xl border border-brand-gray-border bg-brand-gray-mid px-2.5 py-1.5 text-sm transition-colors hover:border-brand-accent/40"
+      >
+        {user.avatar ? (
+          <img src={user.avatar} alt={user.name} className="h-7 w-7 rounded-full object-cover" />
+        ) : (
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-accent/20 text-xs font-bold text-brand-accent-light">
+            {user.name.slice(0, 1).toUpperCase()}
+          </div>
+        )}
+        <span className="hidden max-w-[120px] truncate sm:inline">{user.name}</span>
+        <ChevronDown size={14} className="text-brand-muted" />
+      </button>
+
+      {open && (
+        <div className="absolute top-full right-0 z-50 mt-2 w-52 overflow-hidden rounded-xl border border-brand-gray-border bg-brand-gray-mid py-1 shadow-lg">
+          <div className="border-b border-brand-gray-border px-3 py-2">
+            <p className="truncate text-sm font-medium text-white">{user.name}</p>
+            {user.username && (
+              <p className="truncate text-xs text-brand-muted">@{user.username}</p>
+            )}
+          </div>
+          <Link
+            to="/dashboard"
+            onClick={() => setOpen(false)}
+            className="block px-3 py-2.5 text-sm text-brand-muted hover:bg-white/5 hover:text-white"
+          >
+            Painel
+          </Link>
+          <button
+            type="button"
+            onClick={() => {
+              logout()
+              setOpen(false)
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-brand-muted hover:bg-white/5 hover:text-white"
+          >
+            <LogOut size={14} />
+            Sair
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function Header() {
   const { t } = useLanguage()
+  const { user } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [servicesOpen, setServicesOpen] = useState(false)
 
@@ -136,23 +204,32 @@ function Header() {
             ))}
             <LanguageSelector />
             <div className="ml-2 flex items-center gap-2">
-              <Link to="/login" className="btn-ghost flex items-center gap-1.5 text-sm">
-                <LogIn size={14} />
-                {t.nav.signIn}
-              </Link>
-              <Link to="/register" className="btn-primary px-4 py-2 text-sm">
-                {t.nav.getStarted}
-              </Link>
+              {user ? (
+                <UserMenu />
+              ) : (
+                <>
+                  <Link to="/login" className="btn-ghost flex items-center gap-1.5 text-sm">
+                    <LogIn size={14} />
+                    {t.nav.signIn}
+                  </Link>
+                  <Link to="/register" className="btn-primary px-4 py-2 text-sm">
+                    {t.nav.getStarted}
+                  </Link>
+                </>
+              )}
             </div>
           </nav>
 
-          <button
-            className="rounded-lg p-1 text-white transition-colors hover:bg-white/5 md:hidden"
-            onClick={() => setMobileOpen(!mobileOpen)}
-            aria-label="Menu"
-          >
-            {mobileOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
+          <div className="flex items-center gap-2 md:hidden">
+            {user && <UserMenu />}
+            <button
+              className="rounded-lg p-1 text-white transition-colors hover:bg-white/5"
+              onClick={() => setMobileOpen(!mobileOpen)}
+              aria-label="Menu"
+            >
+              {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+            </button>
+          </div>
         </div>
 
         {mobileOpen && (
@@ -174,14 +251,27 @@ function Header() {
               <div className="px-3 py-2">
                 <LanguageSelector />
               </div>
-              <div className="mt-2 flex flex-col gap-2 px-3">
-                <Link to="/login" className="btn-ghost text-sm">
-                  {t.nav.signIn}
-                </Link>
-                <Link to="/register" className="btn-primary text-center text-sm">
-                  {t.nav.getStarted}
-                </Link>
-              </div>
+              {!user && (
+                <div className="mt-2 flex flex-col gap-2 px-3">
+                  <Link to="/login" className="btn-ghost text-sm">
+                    {t.nav.signIn}
+                  </Link>
+                  <Link to="/register" className="btn-primary text-center text-sm">
+                    {t.nav.getStarted}
+                  </Link>
+                </div>
+              )}
+              {user && (
+                <div className="mt-2 px-3">
+                  <Link
+                    to="/dashboard"
+                    className="btn-primary block text-center text-sm"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    Painel
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -192,6 +282,7 @@ function Header() {
 
 function Hero() {
   const { t } = useLanguage()
+  const { user } = useAuth()
   const stats = [
     { value: '100+', label: t.hero.stats.clients },
     { value: '99.9%', label: t.hero.stats.uptime },
@@ -244,11 +335,11 @@ function Hero() {
               <ArrowRight size={18} />
             </a>
             <Link
-              to="/login"
+              to={user ? '/dashboard' : '/login'}
               className="btn-secondary flex items-center gap-2 px-8 py-4 text-base"
             >
               <Play size={15} className="fill-white" />
-              {t.hero.ctaPanel}
+              {user ? `Olá, ${user.name}` : t.hero.ctaPanel}
             </Link>
           </div>
         </div>

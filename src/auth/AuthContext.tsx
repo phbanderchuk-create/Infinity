@@ -1,8 +1,16 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react'
 
 export type User = {
   name: string
   email: string
+  username?: string
   avatar?: string
   provider: 'email' | 'discord'
   discordId?: string
@@ -30,20 +38,17 @@ function loadUser(): User | null {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(loadUser)
 
-  const value = useMemo(
-    () => ({
-      user,
-      login: (next: User) => {
-        setUser(next)
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
-      },
-      logout: () => {
-        setUser(null)
-        localStorage.removeItem(STORAGE_KEY)
-      },
-    }),
-    [user],
-  )
+  const login = useCallback((next: User) => {
+    setUser(next)
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+  }, [])
+
+  const logout = useCallback(() => {
+    setUser(null)
+    localStorage.removeItem(STORAGE_KEY)
+  }, [])
+
+  const value = useMemo(() => ({ user, login, logout }), [user, login, logout])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

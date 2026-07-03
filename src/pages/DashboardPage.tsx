@@ -87,11 +87,17 @@ export default function DashboardPage() {
                     {user.name.slice(0, 1).toUpperCase()}
                   </div>
                 )}
-                <span className="hidden max-w-[100px] truncate sm:inline">{user.name}</span>
+                <span className="hidden max-w-[120px] truncate sm:inline">{user.name}</span>
                 <ChevronDown size={14} className="text-brand-muted" />
               </button>
               {menuOpen && (
-                <div className="absolute top-full right-0 z-50 mt-2 w-44 overflow-hidden rounded-xl border border-brand-gray-border bg-brand-gray-mid py-1 shadow-lg">
+                <div className="absolute top-full right-0 z-50 mt-2 w-52 overflow-hidden rounded-xl border border-brand-gray-border bg-brand-gray-mid py-1 shadow-lg">
+                  <div className="border-b border-brand-gray-border px-3 py-2">
+                    <p className="truncate text-sm font-medium text-white">{user.name}</p>
+                    {user.username && (
+                      <p className="truncate text-xs text-brand-muted">@{user.username}</p>
+                    )}
+                  </div>
                   <button
                     onClick={handleLogout}
                     className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-brand-muted hover:bg-white/5 hover:text-white"
@@ -108,10 +114,24 @@ export default function DashboardPage() {
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white">Olá, {user.name}</h1>
-          <p className="mt-1 text-brand-muted">
-            Gerencie seus BOTs, faturas e equipe em um só lugar.
-          </p>
+          <div className="flex items-center gap-4">
+            {user.avatar && (
+              <img
+                src={user.avatar}
+                alt={user.name}
+                className="h-14 w-14 rounded-full border border-brand-accent/30 object-cover"
+              />
+            )}
+            <div>
+              <h1 className="text-3xl font-bold text-white">Olá, {user.name}</h1>
+              {user.username && (
+                <p className="mt-0.5 text-sm text-brand-accent-light">@{user.username}</p>
+              )}
+              <p className="mt-1 text-brand-muted">
+                Gerencie seus BOTs, faturas e equipe em um só lugar.
+              </p>
+            </div>
+          </div>
         </div>
 
         <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">

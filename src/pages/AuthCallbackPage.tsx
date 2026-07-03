@@ -16,6 +16,17 @@ function decodePayload(payload: string) {
   }
 }
 
+function readPayload(searchParams: URLSearchParams) {
+  const fromParams = searchParams.get('payload')
+  if (fromParams) return fromParams
+
+  // fallback para #/auth/callback?payload=...
+  const hash = window.location.hash
+  const queryIndex = hash.indexOf('?')
+  if (queryIndex === -1) return null
+  return new URLSearchParams(hash.slice(queryIndex + 1)).get('payload')
+}
+
 export default function AuthCallbackPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
@@ -23,7 +34,7 @@ export default function AuthCallbackPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const payload = params.get('payload')
+    const payload = readPayload(params)
 
     if (!payload) {
       setError('Dados de login inválidos.')
@@ -38,13 +49,17 @@ export default function AuthCallbackPage() {
         return
       }
 
+      const displayName = user.name || user.username || 'Discord User'
+
       login({
-        name: user.name || user.username || 'Discord User',
+        name: displayName,
+        username: user.username,
         email: user.email || '',
         avatar: user.avatar,
         provider: 'discord',
         discordId: user.id,
       })
+
       navigate('/dashboard', { replace: true })
     } catch {
       setError('Não foi possível concluir o login com Discord.')
