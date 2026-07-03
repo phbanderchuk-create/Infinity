@@ -5,6 +5,7 @@ export type User = {
   email: string
   avatar?: string
   provider: 'email' | 'discord'
+  discordId?: string
 }
 
 type AuthContextValue = {

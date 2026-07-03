@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowRight, Eye, EyeOff, Lock, Mail } from 'lucide-react'
 import logoImg from '../assets/logo.png'
 import { useAuth } from '../auth/AuthContext'
@@ -15,9 +15,11 @@ function DiscordIcon({ className }: { className?: string }) {
 export default function LoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const oauthError = searchParams.get('error')
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
@@ -27,13 +29,7 @@ export default function LoginPage() {
   }
 
   const handleDiscord = () => {
-    login({
-      name: 'Discord User',
-      email: 'discord@infinitybots.app',
-      provider: 'discord',
-      avatar: undefined,
-    })
-    navigate('/dashboard')
+    window.location.href = '/api/auth/discord'
   }
 
   return (
@@ -48,6 +44,12 @@ export default function LoginPage() {
           <h1 className="text-2xl font-bold text-white">Entre na sua conta</h1>
           <p className="mt-2 text-sm text-brand-muted">Acesse o painel de controle dos seus BOTs</p>
         </div>
+
+        {oauthError && (
+          <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+            {oauthError}
+          </div>
+        )}
 
         <div className="rounded-2xl border border-brand-gray-border bg-brand-gray-mid p-6 sm:p-8">
           <form onSubmit={handleSubmit} className="space-y-5">

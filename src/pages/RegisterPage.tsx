@@ -31,12 +31,7 @@ export default function RegisterPage() {
   }
 
   const handleDiscord = () => {
-    login({
-      name: 'Discord User',
-      email: 'discord@infinitybots.app',
-      provider: 'discord',
-    })
-    navigate('/dashboard')
+    window.location.href = '/api/auth/discord'
   }
 
   return (

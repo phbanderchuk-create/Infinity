@@ -76,9 +76,17 @@ export default function DashboardPage() {
                 onClick={() => setMenuOpen(!menuOpen)}
                 className="flex items-center gap-2 rounded-xl border border-brand-gray-border bg-brand-gray-mid px-2.5 py-1.5 text-sm transition-colors hover:border-brand-accent/40"
               >
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-accent/20 text-xs font-bold text-brand-accent-light">
-                  {user.name.slice(0, 1).toUpperCase()}
-                </div>
+                {user.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt={user.name}
+                    className="h-7 w-7 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-accent/20 text-xs font-bold text-brand-accent-light">
+                    {user.name.slice(0, 1).toUpperCase()}
+                  </div>
+                )}
                 <span className="hidden max-w-[100px] truncate sm:inline">{user.name}</span>
                 <ChevronDown size={14} className="text-brand-muted" />
               </button>
