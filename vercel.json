@@ -30,6 +30,7 @@
     { "src": "/api/discord-login", "dest": "/api/discord-login.cjs" },
     { "src": "/api/discord-callback", "dest": "/api/discord-callback.cjs" },
     { "src": "/api/auth-verify", "dest": "/api/auth-verify.cjs" },
+    { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
