@@ -1,5 +1,35 @@
 {
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/ping.cjs",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "api/discord-login.cjs",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "api/discord-callback.cjs",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "api/auth-verify.cjs",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    }
+  ],
+  "routes": [
+    { "src": "/api/ping", "dest": "/api/ping.cjs" },
+    { "src": "/api/discord-login", "dest": "/api/discord-login.cjs" },
+    { "src": "/api/discord-callback", "dest": "/api/discord-callback.cjs" },
+    { "src": "/api/auth-verify", "dest": "/api/auth-verify.cjs" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
